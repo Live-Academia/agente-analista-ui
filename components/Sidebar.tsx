@@ -14,7 +14,7 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { analysisState, reset } = useAgentStore();
+  const { analysisState, reset, user, isAdmin, logout } = useAgentStore();
 
   return (
     <aside className="flex h-screen w-56 flex-col border-r border-[#2d2f36] bg-[#13151a] px-4 py-6">
@@ -41,8 +41,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto">
-        <div className="mb-3 rounded-lg border border-[#2d2f36] p-3 text-xs text-[#b0b4c0]">
+      <div className="mt-auto space-y-3">
+        {/* Dataset ativo */}
+        <div className="rounded-lg border border-[#2d2f36] p-3 text-xs text-[#b0b4c0]">
           {analysisState ? (
             <>
               <div className="font-semibold text-[#e8e8e8]">{analysisState.source_name}</div>
@@ -55,6 +56,7 @@ export function Sidebar() {
             <div className="text-[#8b8fa3]">Nenhum dado carregado</div>
           )}
         </div>
+
         {analysisState && (
           <button
             onClick={reset}
@@ -63,6 +65,27 @@ export function Sidebar() {
             🗑️ Limpar dados
           </button>
         )}
+
+        {/* Usuario logado */}
+        <div className="rounded-lg border border-[#2d2f36] p-3 text-xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-semibold text-[#e8e8e8] truncate">{user?.name || user?.username}</span>
+            <span className={cn(
+              "ml-1 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase",
+              isAdmin
+                ? "bg-[#7B68EE]/20 text-[#7B68EE]"
+                : "bg-[#2d2f36] text-[#b0b4c0]"
+            )}>
+              {isAdmin ? "admin" : "user"}
+            </span>
+          </div>
+          <button
+            onClick={logout}
+            className="mt-1 w-full rounded-md border border-[#3a3d45] py-1 text-[#b0b4c0] transition-colors hover:border-[#EF4444] hover:text-[#EF4444]"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     </aside>
   );

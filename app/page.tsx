@@ -11,7 +11,7 @@ type SourceTab = "file" | "sheets" | "supabase" | "bigquery";
 
 export default function Home() {
   const router = useRouter();
-  const { setAnalysisState } = useAgentStore();
+  const { setAnalysisState, isAdmin } = useAgentStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SourceTab>("file");
@@ -91,12 +91,13 @@ export default function Home() {
     }
   }
 
-  const TABS: { id: SourceTab; label: string; icon: string }[] = [
+  const ALL_TABS: { id: SourceTab; label: string; icon: string; adminOnly?: boolean }[] = [
     { id: "file", label: "Arquivo", icon: "📄" },
-    { id: "sheets", label: "Google Sheets", icon: "📗" },
-    { id: "supabase", label: "Supabase", icon: "🗄️" },
-    { id: "bigquery", label: "BigQuery", icon: "📊" },
+    { id: "sheets", label: "Google Sheets", icon: "📗", adminOnly: true },
+    { id: "supabase", label: "Supabase", icon: "🗄️", adminOnly: true },
+    { id: "bigquery", label: "BigQuery", icon: "📊", adminOnly: true },
   ];
+  const TABS = ALL_TABS.filter((t) => !t.adminOnly || isAdmin);
 
   const inputCls =
     "w-full rounded-lg border border-[#3a3d45] bg-[#2d2f36] px-3 py-2 text-sm text-[#e8e8e8] placeholder:text-[#8b8fa3] outline-none focus:border-[#7B68EE] transition-colors";

@@ -1,6 +1,7 @@
 // Cliente HTTP para a Deep Agent API
 
-import { AnalysisResult } from "@/types/analysis";
+import { AnalysisResult, Token, UserInfo } from "@/types/analysis";
+import { useAgentStore } from "@/lib/store";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -12,6 +13,30 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = useAgentStore.getState().token;
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+export async function login(username: string, password: string): Promise<Token> {
+  const form = new FormData();
+  form.append("username", username);
+  form.append("password", password);
+  const res = await fetch(`${API_URL}/auth/token`, { method: "POST", body: form });
+  return handleResponse<Token>(res);
+}
+
+export async function getCurrentUser(): Promise<UserInfo> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<UserInfo>(res);
+}
+
 // ── Analyze ──────────────────────────────────────────────────────────────────
 
 export async function analyzeFile(file: File): Promise<AnalysisResult> {
@@ -19,6 +44,7 @@ export async function analyzeFile(file: File): Promise<AnalysisResult> {
   form.append("file", file);
   const res = await fetch(`${API_URL}/api/analyze`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: form,
   });
   return handleResponse<AnalysisResult>(res);
@@ -33,6 +59,7 @@ export async function analyzeGoogleSheets(
   if (tabName) form.append("tab_name", tabName);
   const res = await fetch(`${API_URL}/api/analyze/google-sheets`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: form,
   });
   return handleResponse<AnalysisResult>(res);
@@ -47,6 +74,7 @@ export async function analyzeSupabase(
   if (query) form.append("query", query);
   const res = await fetch(`${API_URL}/api/analyze/supabase`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: form,
   });
   return handleResponse<AnalysisResult>(res);
@@ -61,6 +89,7 @@ export async function analyzeBigQuery(
   if (sqlQuery) form.append("sql_query", sqlQuery);
   const res = await fetch(`${API_URL}/api/analyze/bigquery`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: form,
   });
   return handleResponse<AnalysisResult>(res);
@@ -74,7 +103,7 @@ export async function sendChat(
 ): Promise<string> {
   const res = await fetch(`${API_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ question, analysis_state: analysisState }),
   });
   const data = await handleResponse<{ answer: string }>(res);
@@ -87,7 +116,7 @@ export async function* streamChat(
 ): AsyncGenerator<string> {
   const res = await fetch(`${API_URL}/api/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ question, analysis_state: analysisState }),
   });
 
@@ -114,7 +143,7 @@ export async function generateReport(
 ): Promise<string> {
   const res = await fetch(`${API_URL}/api/report`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ analysis_state: analysisState }),
   });
   const data = await handleResponse<{ report_text: string }>(res);
