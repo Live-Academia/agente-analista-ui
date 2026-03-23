@@ -80,3 +80,17 @@ export interface ChatMessage {
 }
 
 export type DataSourceType = "file" | "google-sheets" | "supabase" | "bigquery";
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+export interface Token {
+  access_token: string;
+  token_type: string;
+}
+
+export interface UserInfo {
+  username: string;
+  name: string;
+  email: string;
+  roles: string[];
+}

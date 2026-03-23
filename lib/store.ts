@@ -2,9 +2,16 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { AnalysisResult, ChatMessage } from "@/types/analysis";
+import { AnalysisResult, ChatMessage, UserInfo } from "@/types/analysis";
 
 interface AgentStore {
+  // Autenticacao
+  token: string | null;
+  user: UserInfo | null;
+  isAdmin: boolean;
+  setAuth: (token: string, user: UserInfo) => void;
+  logout: () => void;
+
   // Analise atual
   analysisState: AnalysisResult | null;
   setAnalysisState: (state: AnalysisResult | null) => void;
@@ -31,10 +38,28 @@ const MAX_CHAT_MESSAGES = 50;
 export const useAgentStore = create<AgentStore>()(
   persist(
     (set, get) => ({
+      // Auth
+      token: null,
+      user: null,
+      isAdmin: false,
+      setAuth: (token, user) =>
+        set({ token, user, isAdmin: user.roles.includes("admin") }),
+      logout: () =>
+        set({
+          token: null,
+          user: null,
+          isAdmin: false,
+          analysisState: null,
+          chatHistory: [],
+          reportText: null,
+        }),
+
+      // Analise
       analysisState: null,
       setAnalysisState: (state) =>
         set({ analysisState: state, chatHistory: [], reportText: null }),
 
+      // Chat
       chatHistory: [],
       addMessage: (msg) => {
         const history = [...get().chatHistory, msg];
@@ -47,12 +72,15 @@ export const useAgentStore = create<AgentStore>()(
       },
       clearChat: () => set({ chatHistory: [] }),
 
+      // Relatorio
       reportText: null,
       setReportText: (text) => set({ reportText: text }),
 
+      // Loading
       isAnalyzing: false,
       setIsAnalyzing: (v) => set({ isAnalyzing: v }),
 
+      // Reset
       reset: () =>
         set({
           analysisState: null,
@@ -63,8 +91,10 @@ export const useAgentStore = create<AgentStore>()(
     }),
     {
       name: "deep-agent-store",
-      // Nao persiste loading states
       partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+        isAdmin: state.isAdmin,
         analysisState: state.analysisState,
         chatHistory: state.chatHistory,
         reportText: state.reportText,
